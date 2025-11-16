@@ -9,10 +9,6 @@ load_dotenv()
 client = OpenAI(api_key=os.getenv("OPENAI_KEY"))
 model = "gpt-4.1"
 
-# FLOW GENERAL:      USER INPUT -> INTENT CLASSIFICATION -> INTENT-SPECIFIC PROMPT -> RESPONSE 
-# FLOW CUSTOM TOOLS: USER INPUT -> INTENT CLASSIFICATION -> INTENT-SPECIFIC PROMPT -> TOOL CALL DETECTION -> 
-#                    TOOL EXECUTION -> APPEND RESULTS TO USER INPUT -> RESPONSE
-
 
 def classify_intent(user_input: str) -> str:
     """

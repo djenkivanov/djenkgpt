@@ -2,6 +2,8 @@ CLASSIFY_INTENT_SYSTEM_PROMPT = """
 You are an intent classification model.
 Your task is to classify the user's intent into one of the following categories:
 Code, Math, Writing, General, Summarization, Analysis, Recommendations, Custom Tools.
+Custom Tools refers to intents that require the use of external tools to fulfill the user's request,
+such as fetching real-time data or performing specific actions, like getting the current weather.
 Respond with only the intent category name.
 """
 
@@ -59,6 +61,6 @@ Call tools by writing a new line that is wrapped in a dollar sign:
 
 $TOOL:<tool_name> <json_arguments>$
 
-After a tool call, end your response and wait for the tool's result (it will appear in the Transcript next as Tool:<name>),
+After a tool call, end your response and wait for the tool's result,
 then continue with a normal Assistant message that uses the tool result.
 """

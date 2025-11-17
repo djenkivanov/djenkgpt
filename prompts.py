@@ -7,6 +7,15 @@ such as fetching real-time data, getting the weather, web search for latest tren
 Respond with only the intent category name.
 """
 
+MEMORY_SUMMARIZATION_PROMPT = """
+You are a memory summarization assistant.
+Your task is to create a summary based on the chat history between the user and the assistant.
+Keep the summary concise while capturing important details and context from the conversation.
+You may also be provided with an existing summary, update it with new relevant information from the chat history,
+and ensure it remains coherent and informative.
+You may choose to retain, dicard, or modify parts of the existing summary as needed in order to best reflect the overall context of the conversation.
+"""
+
 MEMORY_PROMPT = """
 You are a memory assistant.
 Your task is to analyze user inputs and identify key information to store in memory for future reference.

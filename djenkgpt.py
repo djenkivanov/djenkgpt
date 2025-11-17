@@ -4,6 +4,7 @@ from openai import OpenAI
 from typing import Tuple, List, Dict, Any
 import prompts
 import tools
+import json
 
 load_dotenv()
 client = OpenAI(api_key=os.getenv("OPENAI_KEY"))
@@ -66,16 +67,21 @@ def update_user_info(memory_info: str, existing_info: Dict[str, Any]) -> Dict[st
     )
     return updated_info.choices[0].message.content.rstrip()
 
-def generate_response(user_input: str, intent_prompt: str, memory:List[Dict[str, str]], user_info: Dict[str, Any]) -> str:
+def generate_response(user_input: str, intent_prompt: str, short_term_memory:List[Dict[str, str]],
+                      long_term_memory, user_info: Dict[str, Any]) -> str:
     """
     Generates a response based on the user input, intent prompt, and user information.
     """
+    formatted_memory = "\n".join(f"{m['role']}: {m['content']}" for m in short_term_memory)
+    memory_block = (
+        f"LONG-TERM MEMORY:\n{long_term_memory}\n\nSHORT-TERM MEMORY:\n{formatted_memory}" 
+        f"\n\nUSER INFORMATION:\n{json.dumps(user_info, indent=2)}"
+    )
     response = client.chat.completions.create(
         model=model,
         messages=[
             {"role": "system", "content": intent_prompt},
-            {"role": "system", "content": str(memory)},
-            {"role": "system", "content": user_info},
+            {"role": "system", "content": memory_block},
             {"role": "user", "content": user_input},
         ],
         max_tokens=500,
@@ -84,17 +90,37 @@ def generate_response(user_input: str, intent_prompt: str, memory:List[Dict[str,
     return response.choices[0].message.content.rstrip()
 
 
+def update_long_term_memory(short_term_memory: List[Dict[str, str]], long_term_memory: str) -> str:
+    chunk_size = 6
+    formatted_memory = "\n".join(f"{m['role']}: {m['content']}" for m in short_term_memory[:chunk_size])
+    summary = client.chat.completions.create(
+        model=model,
+        messages=[
+            {"role": "system", "content": prompts.MEMORY_SUMMARIZATION_PROMPT},
+            {"role": "user", "content": f"Existing Summary: {long_term_memory}\n\nChat History:\n{formatted_memory}"},
+        ],
+        max_tokens=300,
+        temperature=0.0,
+    )
+    del short_term_memory[:chunk_size]
+    return summary.choices[0].message.content.rstrip()
+
 def gpt():
     trace: List[Tuple[str, str]] = []
-    memory: List[Dict[str, str]] = []
+    short_term_memory: List[Dict[str, str]] = []
+    long_term_memory: str = ""
     user_info: Dict[str, Any] = {}
     
     print("Welcome to DjenkGPT! How can I assist you today?")
     
     while True:
+        # summarize memory if it exceeds 16 exchanges (8 user-assistant pairs, messages), summarize by chunks of 3 after 5 pairs
+        if len(short_term_memory) >= 16: 
+            long_term_memory = update_long_term_memory(short_term_memory, long_term_memory)
+            trace.append(("System", "Memory summarized to maintain context length."))
         user_input = input("You: ").rstrip()
         trace.append(("User", user_input))
-        memory.append({"role": "user", "content": user_input})
+        short_term_memory.append({"role": "user", "content": user_input})
         
         if user_input == "/quit":
                 print("Thank you for using DjenkGPT! Goodbye!")
@@ -107,18 +133,18 @@ def gpt():
         trace.append(("System", f"Classified Intent: {intent}"))
         intent_prompt = get_intent_prompt(intent)
         
-        response = generate_response(user_input, intent_prompt, memory, user_info)
+        response = generate_response(user_input, intent_prompt, short_term_memory, long_term_memory, user_info)
         
         if intent.lower() == "custom tools": # allow single tool call per user message                
             tool = tools.detect_tool_call(response)
             if tool:
                 tool_response = tools.process_tool_call(tool[0], tool[1])
                 user_input += f"\n\nTool Result: {tool_response['result']}"
-                response = generate_response(user_input, intent_prompt, memory, user_info)
+                response = generate_response(user_input, intent_prompt, short_term_memory, long_term_memory, user_info)
                 trace.append(("Tool", f"Called Tool: {tool_response['tool_name']} with Result: {tool_response['result']}"))
                 
         trace.append(("Assistant", response))
-        memory.append({"role": "assistant", "content": response})
+        short_term_memory.append({"role": "assistant", "content": response})
         print(f"Assistant: {response}\n")
     for role, content in trace:
         print(f"{role}: {content}\n") 

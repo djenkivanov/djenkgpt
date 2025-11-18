@@ -1,6 +1,6 @@
 # Introducing DjenkGPT!
 
-Work in progress, documentation will be updated.
+Work in progress, documentation will be updated. A lot of inspiration and information for this project comes from John Berryman and Albert Ziegler's [*Prompt Engineering for LLMs*](https://www.oreilly.com/library/view/prompt-engineering-for/9781098156145/) and Chip Huyen's [*AI Engineering*](https://www.oreilly.com/library/view/ai-engineering/9781098166298/)
 
 ## Current features of DjenkGPT
 

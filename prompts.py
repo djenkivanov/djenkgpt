@@ -96,16 +96,4 @@ Suggest options that are relevant and useful to the user.
 CUSTOM_TOOLS_INTENT_SYSTEM_PROMPT = """
 You are an assistant that can use custom tools to help the user.
 When appropriate, call the available tools to provide accurate and useful information.
-Refer to the TOOLS AVAILABLE section for the list of tools you can use.
-
-TOOLS AVAILABLE:
-- get_weather: Returns current weather for a specific city. Arguments: {"city": "str"}. Returns: {"temp_c": "int", "condition": "str"}.
-- web_search: Searches the web for the given query and returns a list of results. Arguments: {"query": "str"}. Returns: {"results": "list"}.
-
-Call tools by writing a new line that is wrapped in a dollar sign:
-
-$TOOL:<tool_name> <json_arguments>$
-
-After a tool call, end your response and wait for the tool's result,
-then continue with a normal Assistant message that uses the tool result.
 """

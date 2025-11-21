@@ -83,10 +83,12 @@ def generate_response(user_input: str, intent_prompt: str, short_term_memory:Lis
             {"role": "system", "content": memory_block},
             {"role": "user", "content": user_input},
         ],
+        tool_choice="auto",
+        tools=tools.TOOLS,
         max_tokens=500,
         temperature=0.7,
     )
-    return response.choices[0].message.content.rstrip()
+    return response.choices[0].message
 
 
 def update_long_term_memory(short_term_memory: List[Dict[str, str]], long_term_memory: str) -> str:
@@ -122,8 +124,8 @@ def gpt():
         short_term_memory.append({"role": "user", "content": user_input})
         
         if user_input == "/quit":
-                print("Thank you for using DjenkGPT! Goodbye!")
-                break
+            print("Thank you for using DjenkGPT! Goodbye!")
+            break
             
         current_user_info = generate_user_info(user_input)
         user_info = update_user_info(current_user_info, user_info)
@@ -133,19 +135,22 @@ def gpt():
         intent_prompt = get_intent_prompt(intent)
         
         response = generate_response(user_input, intent_prompt, short_term_memory, long_term_memory, user_info)
+        tool_call = response.tool_calls
+        if tool_call:
+            tool_call = tool_call[0].function
+            tool = (tool_call.name, tool_call.arguments)
+            short_term_memory.append({"role": "tool", "content": f"Calling Tool: {tool[0]} with Args: {tool[1]}"})
+            tool_response = tools.process_tool_call(tool[0], tool[1])
+            short_term_memory.append({"role": "tool", "content": tool_response['result']})
+            response = generate_response(user_input, intent_prompt, short_term_memory, long_term_memory, user_info)
+            trace.append(("Tool", f"Called Tool: {tool_response['tool_name']} with Result: {tool_response['result']}"))
         
-        if intent.lower() == "custom tools": # allow single tool call per user message                
-            tool = tools.detect_tool_call(response)
-            if tool:
-                short_term_memory.append({"role": "tool", "content": response})
-                tool_response = tools.process_tool_call(tool[0], tool[1])
-                short_term_memory.append({"role": "tool", "content": tool_response['result']})
-                response = generate_response(user_input, intent_prompt, short_term_memory, long_term_memory, user_info)
-                trace.append(("Tool", f"Called Tool: {tool_response['tool_name']} with Result: {tool_response['result']}"))
-                
+        response = response.content.rstrip()     
         trace.append(("Assistant", response))
         short_term_memory.append({"role": "assistant", "content": response})
         print(f"Assistant: {response}\n")
+        
+    # Debug trace
     for role, content in trace:
         print(f"{role}: {content}\n") 
     

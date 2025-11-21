@@ -40,44 +40,83 @@ def web_search(query: str) -> Dict[str, Any]:
     return relevant_summary
 
 
-TOOLS: Dict[str, Callable[..., Any]] = {
+CALL_TOOL: Dict[str, Callable[..., Any]] = {
     "get_weather": get_weather,
     "web_search": web_search,
 }
 
-TOOL_INV = [
-    {"name": "get_weather", "args": {"city": "str"}, "returns": {"temp_c": "int", "condition": "str"},
-     "desc": "Returns current weather for a specific city."},
-    
-    {"name": "web_search", "args": {"query": "str"}, "returns": {"results": "list"},
-     "desc": "Searches the web for the given query and returns a list of results."},
+TOOLS = [
+    {
+        "type": "function",
+        "function": {
+            "name": "get_weather",
+            "description": "Get the current weather for a specific location."
+                            "Use this function to answer any weather-related questions from the user.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "city": {
+                        "type": "string",
+                        "description": "The city to get the weather for."
+                    },
+                },
+                "required": ["city"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "web_search",
+            "description": "Searches the web for the given query and returns a list of results."
+                            "Only use this function if no tool can answer the user's question.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "query": {
+                        "type": "string",
+                        "description": "The search query."
+                    },
+                },
+                "required": ["query"],
+            },
+        },
+    }
 ]
 
+# TOOL_INV = [
+#     {"name": "get_weather", "args": {"city": "str"}, "returns": {"temp_c": "int", "condition": "str"},
+#      "desc": "Returns current weather for a specific city."},
+    
+#     {"name": "web_search", "args": {"query": "str"}, "returns": {"results": "list"},
+#      "desc": "Searches the web for the given query and returns a list of results."},
+# ]
 
-TOOL_CALL_REGEX = re.compile(r"^\$TOOL:(\w+)\s({.*})\$$", re.MULTILINE)
+
+# TOOL_CALL_REGEX = re.compile(r"^\$TOOL:(\w+)\s({.*})\$$", re.MULTILINE)
 
 
-def detect_tool_call(text: str):
-    """
-    Returns (tool_name, args_dict) or None.
-    """
-    tools = TOOL_CALL_REGEX.search(text.strip())
-    if not tools:
-        return None
-    tool_name = tools.group(1)
-    try:
-        tool_args = json.loads(tools.group(2))
-    except json.JSONDecodeError:
-        return None
-    return tool_name, tool_args
+# def detect_tool_call(text: str):
+#     """
+#     Returns (tool_name, args_dict) or None.
+#     """
+#     tools = TOOL_CALL_REGEX.search(text.strip())
+#     if not tools:
+#         return None
+#     tool_name = tools.group(1)
+#     try:
+#         tool_args = json.loads(tools.group(2))
+#     except json.JSONDecodeError:
+#         return None
+#     return tool_name, tool_args
 
 
 def process_tool_call(tool_name, tool_args) -> Dict[str, Any] | None:
-    tool_name, tool_args
+    tool_args = json.loads(tool_args)
     if tool_name == 'get_weather':
-        response = asyncio.run(TOOLS[tool_name](**tool_args))
+        response = asyncio.run(CALL_TOOL[tool_name](**tool_args))
     else:
-        response = TOOLS[tool_name](**tool_args)
+        response = CALL_TOOL[tool_name](**tool_args)
     return {"tool_name": tool_name, "result": response}
 
 

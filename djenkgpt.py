@@ -10,7 +10,6 @@ load_dotenv()
 client = OpenAI(api_key=os.getenv("OPENAI_KEY"))
 model = "gpt-4.1"
 
-
 def classify_intent(user_input: str) -> str:
     """
     Classifies the user's intent using the classification system prompt.
@@ -138,8 +137,9 @@ def gpt():
         if intent.lower() == "custom tools": # allow single tool call per user message                
             tool = tools.detect_tool_call(response)
             if tool:
+                short_term_memory.append({"role": "tool", "content": response})
                 tool_response = tools.process_tool_call(tool[0], tool[1])
-                user_input += f"\n\nTool Result: {tool_response['result']}"
+                short_term_memory.append({"role": "tool", "content": tool_response['result']})
                 response = generate_response(user_input, intent_prompt, short_term_memory, long_term_memory, user_info)
                 trace.append(("Tool", f"Called Tool: {tool_response['tool_name']} with Result: {tool_response['result']}"))
                 

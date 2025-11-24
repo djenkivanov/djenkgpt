@@ -30,7 +30,27 @@ LLM calculating comparison with real answers:
 ![Calculation correct result 2](./img/calc2.png)
 
 ### Calculator *(After)*
-LLM calculating using the calculator tool:
 
+The same calculations from above:
+
+![LLM Calculation correct result 1](./img/after_llm_calc1.png)
+
+![LLM Calculation correct result 2](./img/after_llm_calc2.png)
+
+**Numerals converted to numbers ->**
 ![LLM Calculation result 3](./img/llm_calc3.png)
+
+**Correct and accurate results ->**
+![LLM Calculation result 4](./img/llm_calc4.png)
+![Calculation correct result 4](./img/calc4.png)
+
+**Instructions when explanation is appropriate or when prompted ->**
+![LLM Calculation result 5](./img/llm_calc5.png)
+
+**More complex math symbols are also taken into consideration ->**
+![LLM Calculation result 6](./img/llm_calc6.png)
+![Calculation correct result 6](./img/calc6.png)
+
+(keep in mind pi rounding inaccuracies)
+
 

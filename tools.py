@@ -9,6 +9,7 @@ from openai import OpenAI
 import prompts
 from scipy.spatial import distance
 import numpy as np
+from math import *
 
 
 load_dotenv()
@@ -42,9 +43,7 @@ def web_search(query: str) -> Dict[str, Any]:
 
 def calculate_expression(expression: str) -> str:
     try:
-        allowed_chars = "0123456789+-*/(). "
-        if any(char not in allowed_chars for char in expression):
-            return "Error: Invalid characters in expression."
+        expression = expression.replace("^", "**")
         result = eval(expression)
         return result
     except Exception as e:

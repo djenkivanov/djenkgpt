@@ -164,10 +164,7 @@ def gpt():
             tool_call_id = tool_call[0].id
             tool_call = tool_call[0].function
             tool = (tool_call.name, tool_call.arguments)
-            # short_term_memory.append({"role": "tool", "content": f"Calling Tool: {tool[0]} with Args: {tool[1]}"})
             tool_response = tools.process_tool_call(tool[0], tool[1])
-            # short_term_memory.append({"role": "tool", "content": tool_response['result'], "tool_call_id": tool_call_id})
-            # response = generate_response(user_input, intent_prompt)
             response = generate_tool_response(user_input, intent_prompt, tool, tool_call_id, tool_response)
             trace.append(("Tool", f"Called Tool: {tool_response['tool_name']} with Result: {tool_response['result']}"))
         

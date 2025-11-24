@@ -18,3 +18,19 @@ Work in progress, documentation will be updated. A lot of inspiration and inform
     - **short-term**: Previous 5 user-assistant chat messages are stored raw for clarity.
     - **long-term**: When total messages in short-term memory exceed 8, generate/update a (existing) summary of the earliest 3 messages and remove them from short-term memory.
 
+## Features in depth
+
+### Calculator *(Before)*
+LLM calculating comparison with real answers:
+
+![LLM Calculation result 1](./img/llm_calc1.png)
+![Calculation correct result 1](./img/calc1.png)
+
+![LLM Calculation result 2](./img/llm_calc2.png)
+![Calculation correct result 2](./img/calc2.png)
+
+### Calculator *(After)*
+LLM calculating using the calculator tool:
+
+![LLM Calculation result 3](./img/llm_calc3.png)
+

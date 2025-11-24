@@ -66,16 +66,39 @@ def update_user_info(memory_info: str, existing_info: Dict[str, Any]) -> Dict[st
     )
     return updated_info.choices[0].message.content.rstrip()
 
-def generate_response(user_input: str, intent_prompt: str, short_term_memory:List[Dict[str, str]],
-                      long_term_memory, user_info: Dict[str, Any]) -> str:
+
+def get_memory_block(short_term_memory:List[Dict[str, str]], long_term_memory, user_info: Dict[str, Any]):
+    formatted_memory = "\n".join(f"{m['role']}: {m['content']}" for m in short_term_memory)
+    memory_block = (
+        f"USER INFORMATION:\n{json.dumps(user_info, indent=2)}"
+        f"\n\nLONG-TERM MEMORY:\n{long_term_memory}\n\nSHORT-TERM MEMORY:\n{formatted_memory}" 
+    )
+    return memory_block
+
+
+def generate_tool_response(user_input: str, intent_prompt: str, tool, tool_call_id, tool_response) -> str:
+    response = client.chat.completions.create(
+        model=model,
+        messages=[
+            {"role": "system", "content": intent_prompt},
+            {"role": "user", "content": user_input},
+            {"role": "assistant", "tool_calls": [
+                {
+                    "id": tool_call_id,
+                    "type": "function",
+                    "function": {"name": tool[0], "arguments": tool[1]}
+                }
+            ]},
+            {"role": "tool", "tool_call_id": tool_call_id, "content": json.dumps(tool_response)},
+        ]
+    )
+    return response.choices[0].message
+
+
+def generate_response(user_input: str, intent_prompt: str, memory_block: str) -> str:
     """
     Generates a response based on the user input, intent prompt, and user information.
     """
-    formatted_memory = "\n".join(f"{m['role']}: {m['content']}" for m in short_term_memory)
-    memory_block = (
-        f"LONG-TERM MEMORY:\n{long_term_memory}\n\nSHORT-TERM MEMORY:\n{formatted_memory}" 
-        f"\n\nUSER INFORMATION:\n{json.dumps(user_info, indent=2)}"
-    )
     response = client.chat.completions.create(
         model=model,
         messages=[
@@ -133,16 +156,19 @@ def gpt():
         intent = classify_intent(user_input)
         trace.append(("System", f"Classified Intent: {intent}"))
         intent_prompt = get_intent_prompt(intent)
+        memory_block = get_memory_block(short_term_memory, long_term_memory, user_info)
         
-        response = generate_response(user_input, intent_prompt, short_term_memory, long_term_memory, user_info)
+        response = generate_response(user_input, intent_prompt, memory_block)
         tool_call = response.tool_calls
         if tool_call:
+            tool_call_id = tool_call[0].id
             tool_call = tool_call[0].function
             tool = (tool_call.name, tool_call.arguments)
-            short_term_memory.append({"role": "tool", "content": f"Calling Tool: {tool[0]} with Args: {tool[1]}"})
+            # short_term_memory.append({"role": "tool", "content": f"Calling Tool: {tool[0]} with Args: {tool[1]}"})
             tool_response = tools.process_tool_call(tool[0], tool[1])
-            short_term_memory.append({"role": "tool", "content": tool_response['result']})
-            response = generate_response(user_input, intent_prompt, short_term_memory, long_term_memory, user_info)
+            # short_term_memory.append({"role": "tool", "content": tool_response['result'], "tool_call_id": tool_call_id})
+            # response = generate_response(user_input, intent_prompt)
+            response = generate_tool_response(user_input, intent_prompt, tool, tool_call_id, tool_response)
             trace.append(("Tool", f"Called Tool: {tool_response['tool_name']} with Result: {tool_response['result']}"))
         
         response = response.content.rstrip()     

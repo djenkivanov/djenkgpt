@@ -40,9 +40,21 @@ def web_search(query: str) -> Dict[str, Any]:
     return relevant_summary
 
 
+def calculate_expression(expression: str) -> str:
+    try:
+        allowed_chars = "0123456789+-*/(). "
+        if any(char not in allowed_chars for char in expression):
+            return "Error: Invalid characters in expression."
+        result = eval(expression)
+        return result
+    except Exception as e:
+        return f"Error: {str(e)}"
+
+
 CALL_TOOL: Dict[str, Callable[..., Any]] = {
     "get_weather": get_weather,
     "web_search": web_search,
+    "calculate_expression": calculate_expression,
 }
 
 TOOLS = [
@@ -81,34 +93,25 @@ TOOLS = [
                 "required": ["query"],
             },
         },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "calculate_expression",
+            "description": "Calculator tool to compute mathematical expressions.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "expression": {
+                        "type": "string",
+                        "description": "The mathematical expression to calculate."
+                    },
+                },
+                "required": ["expression"],
+            },
+        },
     }
 ]
-
-# TOOL_INV = [
-#     {"name": "get_weather", "args": {"city": "str"}, "returns": {"temp_c": "int", "condition": "str"},
-#      "desc": "Returns current weather for a specific city."},
-    
-#     {"name": "web_search", "args": {"query": "str"}, "returns": {"results": "list"},
-#      "desc": "Searches the web for the given query and returns a list of results."},
-# ]
-
-
-# TOOL_CALL_REGEX = re.compile(r"^\$TOOL:(\w+)\s({.*})\$$", re.MULTILINE)
-
-
-# def detect_tool_call(text: str):
-#     """
-#     Returns (tool_name, args_dict) or None.
-#     """
-#     tools = TOOL_CALL_REGEX.search(text.strip())
-#     if not tools:
-#         return None
-#     tool_name = tools.group(1)
-#     try:
-#         tool_args = json.loads(tools.group(2))
-#     except json.JSONDecodeError:
-#         return None
-#     return tool_name, tool_args
 
 
 def process_tool_call(tool_name, tool_args) -> Dict[str, Any] | None:

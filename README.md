@@ -16,7 +16,7 @@ Work in progress, documentation will be updated. A lot of inspiration and inform
 
 - DjenkGPT has short- and long-term memory. 
     - **short-term**: Previous 5 user-assistant chat messages are stored raw for clarity.
-    - **long-term**: When total messages in short-term memory exceed 8, generate/update a (existing) summary of the earliest 3 messages and remove them from short-term memory.
+    - **long-term**: When total messages in short-term memory exceed 8, generate/update a (existing) summary of the oldest 3 messages and remove them from short-term memory.
 
 ## Features in depth
 
